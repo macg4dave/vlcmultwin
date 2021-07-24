@@ -1,0 +1,52 @@
+use AppleScript version "2.4" -- Yosemite (10.10) or later
+use scripting additions
+
+property vlc_loc : null
+
+on run
+	
+	try
+		find_vlc()
+		do shell script "open -n " & quoted form of vlc_loc
+		
+	on error
+		tell application "VLC" to activate
+		set vlc_loc to do shell script "ps aux | grep '[V]LC' | awk '{ print $11 }' | rev | cut -c20- | rev"
+		if vlc_loc is "" then
+			display dialog "Could not find VLC" buttons {"Cancel", "OK"} default button "OK"
+			quit
+		end if
+		do shell script "open -n " & quoted form of vlc_loc
+	end try
+	
+end run
+
+on open theFiles
+	
+	find_vlc()
+	try
+		repeat with theFile in theFiles
+			do shell script "open -na " & quoted form of vlc_loc & space & quote & (POSIX path of theFile) & quote
+		end repeat
+	on error
+		tell application "VLC" to activate
+		set vlc_loc to do shell script "ps aux | grep '[V]LC' | awk '{ print $11 }' | rev | cut -c20- | rev"
+		if vlc_loc is "" then
+			display dialog "Could not find VLC" buttons {"Cancel", "OK"} default button "OK"
+			quit
+		end if
+		repeat with theFile in theFiles
+			do shell script "open -na " & quoted form of vlc_loc & space & quote & (POSIX path of theFile) & quote
+		end repeat
+	end try
+	
+end open
+
+on find_vlc()
+	
+	tell application "Finder"
+		return POSIX path of (application file id "org.videolan.vlc" as text)
+		set vlc_loc to result
+	end tell
+	
+end find_vlc
